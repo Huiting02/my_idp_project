@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Street Light Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<canvas id="powerChart"></canvas>
+
+<script>
+fetch("https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1.json")
+.then(res => res.json())
+.then(data => {
+  const ctx = document.getElementById("powerChart");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: ["Now"],
+      datasets: [{
+        label: "Power (W)",
+        data: [data.power],
+        borderWidth: 2
+      }]
+    }
+  });
+});
+</script>
+
+</body>
+</html>

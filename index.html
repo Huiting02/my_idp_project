@@ -1,216 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Street Light Dashboard</title>
+  <title>Smart Street Light – History Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 20px; }
-    h1 { text-align: center; color: #333; }
-    .zone { margin-bottom: 60px; }
-    h2 { text-align: center; color: #444; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; font-size: 1.5em; }
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
-    .chart-container { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); height: 320px; }
-    .history-section { display: none; margin-top: 30px; }
-    .history-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+    body { font-family: Arial; margin: 20px; }
+    canvas { margin-bottom: 50px; }
   </style>
 </head>
+
 <body>
-  <h1>Smart Street Light Dashboard</h1>
 
-  <!-- Zone 1 -->
-  <div class="zone" id="z1">
-    <h2 onclick="toggleHistory('z1')">Zone 1 (Click to Show/Hide History Graphs)</h2>
-    <div class="charts-grid">
-      <div class="chart-container"><canvas id="z1-power-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z1-current-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z1-ldr-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z1-brightness-gauge"></canvas></div>
-    </div>
-    <div class="history-section" id="z1-history">
-      <div class="history-grid">
-        <div class="chart-container"><canvas id="z1-power-line"></canvas></div>
-        <div class="chart-container"><canvas id="z1-current-line"></canvas></div>
-        <div class="chart-container"><canvas id="z1-ldr-line"></canvas></div>
-        <div class="chart-container"><canvas id="z1-brightness-line"></canvas></div>
-      </div>
-    </div>
-  </div>
+<h2>Zone 1 – Power</h2>
+<canvas id="z1Power"></canvas>
 
-  <!-- Zone 2 -->
-  <div class="zone" id="z2">
-    <h2 onclick="toggleHistory('z2')">Zone 2 (Click to Show/Hide History Graphs)</h2>
-    <div class="charts-grid">
-      <div class="chart-container"><canvas id="z2-power-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z2-current-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z2-ldr-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z2-brightness-gauge"></canvas></div>
-    </div>
-    <div class="history-section" id="z2-history">
-      <div class="history-grid">
-        <div class="chart-container"><canvas id="z2-power-line"></canvas></div>
-        <div class="chart-container"><canvas id="z2-current-line"></canvas></div>
-        <div class="chart-container"><canvas id="z2-ldr-line"></canvas></div>
-        <div class="chart-container"><canvas id="z2-brightness-line"></canvas></div>
-      </div>
-    </div>
-  </div>
+<h2>Zone 1 – Current</h2>
+<canvas id="z1Current"></canvas>
 
-  <!-- Zone 3 -->
-  <div class="zone" id="z3">
-    <h2 onclick="toggleHistory('z3')">Zone 3 (Click to Show/Hide History Graphs)</h2>
-    <div class="charts-grid">
-      <div class="chart-container"><canvas id="z3-power-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z3-current-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z3-ldr-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z3-brightness-gauge"></canvas></div>
-    </div>
-    <div class="history-section" id="z3-history">
-      <div class="history-grid">
-        <div class="chart-container"><canvas id="z3-power-line"></canvas></div>
-        <div class="chart-container"><canvas id="z3-current-line"></canvas></div>
-        <div class="chart-container"><canvas id="z3-ldr-line"></canvas></div>
-        <div class="chart-container"><canvas id="z3-brightness-line"></canvas></div>
-      </div>
-    </div>
-  </div>
+<h2>Zone 1 – LDR</h2>
+<canvas id="z1Ldr"></canvas>
 
-  <!-- Zone 4 -->
-  <div class="zone" id="z4">
-    <h2 onclick="toggleHistory('z4')">Zone 4 (Click to Show/Hide History Graphs)</h2>
-    <div class="charts-grid">
-      <div class="chart-container"><canvas id="z4-power-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z4-current-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z4-ldr-gauge"></canvas></div>
-      <div class="chart-container"><canvas id="z4-brightness-gauge"></canvas></div>
-    </div>
-    <div class="history-section" id="z4-history">
-      <div class="history-grid">
-        <div class="chart-container"><canvas id="z4-power-line"></canvas></div>
-        <div class="chart-container"><canvas id="z4-current-line"></canvas></div>
-        <div class="chart-container"><canvas id="z4-ldr-line"></canvas></div>
-        <div class="chart-container"><canvas id="z4-brightness-line"></canvas></div>
-      </div>
-    </div>
-  </div>
+<h2>Zone 1 – Brightness</h2>
+<canvas id="z1Brightness"></canvas>
 
-  <script>
-    // === Fill your Firebase config here ===
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTVVZwFig73ziu-NxVK0UV6EElYTjWHik",
-      authDomain: "idp-eg8.firebaseapp.com",
-      databaseURL: "https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "idp-eg8",
-      storageBucket: "idp-eg8.firebasestorage.app",
-      messagingSenderId: "945752838310",
-      appId: "1:945752838310:web:4f13c42db6713f653a6467"
-    };
+<script>
+const BASE_URL =
+  "https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1/history.json";
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+fetch(BASE_URL)
+.then(res => res.json())
+.then(history => {
 
-    // Gauge chart (real-time)
-    function createGauge(id, label, color, max) {
-      return new Chart(document.getElementById(id), {
-        type: 'doughnut',
-        data: {
-          datasets: [{
-            data: [0, max],
-            backgroundColor: [color, '#e0e0e0'],
-            borderWidth: 0,
-            circumference: 180,
-            rotation: 270
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            title: { display: true, text: label, font: { size: 16 } },
-            tooltip: { enabled: false },
-            legend: { display: false }
-          },
-          cutout: '75%'
-        }
-      });
-    }
+  const labels = [];
+  const power = [];
+  const current = [];
+  const ldr = [];
+  const brightness = [];
 
-    // Line chart (history)
-    function createLineChart(id, label, color) {
-      return new Chart(document.getElementById(id), {
-        type: 'line',
-        data: { labels: [], datasets: [{ label: label, data: [], borderColor: color, tension: 0.1, fill: false }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { title: { display: true, text: 'Time' } },
-            y: { title: { display: true, text: label } }
-          }
-        }
-      });
-    }
+  for (const ts in history) {
+    labels.push(new Date(parseInt(ts)).toLocaleTimeString());
+    power.push(history[ts].power);
+    current.push(history[ts].current);
+    ldr.push(history[ts].ldr);
+    brightness.push(history[ts].brightness);
+  }
 
-    const zones = ['Z1', 'Z2', 'Z3', 'Z4'];
-    const metrics = ['power', 'current', 'ldr', 'brightness_level'];
-    const colors = { power: '#f44336', current: '#ff9800', ldr: '#4caf50', brightness_level: '#2196f3' };
-    const maxes = { power: 100, current: 10, ldr: 1023, brightness_level: 100 };
-    const charts = { gauges: {}, lines: {} };
-
-    zones.forEach((zone, i) => {
-      const zKey = `z${i + 1}`;
-
-      charts.gauges[zKey] = {};
-      charts.lines[zKey] = {};
-
-      metrics.forEach(metric => {
-        const title = metric === 'ldr' ? 'LDR Value' :
-                      metric === 'brightness_level' ? 'Brightness Level (%)' :
-                      metric.charAt(0).toUpperCase() + metric.slice(1) + (metric === 'current' ? ' (A)' : ' (W)');
-
-        charts.gauges[zKey][metric] = createGauge(`${zKey}-${metric}-gauge`, title, colors[metric], maxes[metric]);
-        charts.lines[zKey][metric] = createLineChart(`${zKey}-${metric}-line`, title + ' History', colors[metric]);
-      });
-
-      // Real-time gauge updates
-      db.ref(`SmartStreetLight/${zone}`).on('value', snap => {
-        const data = snap.val() || {};
-        metrics.forEach(metric => {
-          const val = data[metric] || 0;
-          charts.gauges[zKey][metric].data.datasets[0].data = [val, maxes[metric] - val];
-          charts.gauges[zKey][metric].update();
-        });
-      });
-
-      // Historical line charts (last 50 points)
-      metrics.forEach(metric => {
-        const histRef = db.ref(`history/${zone}/${metric}`);
-        const queryRef = histRef.orderByChild('timestamp').limitToLast(50);
-
-        queryRef.on('value', snap => {
-          const raw = snap.val();
-          if (!raw) return;
-
-          const entries = Object.values(raw).sort((a, b) => a.timestamp - b.timestamp);
-          const times = entries.map(e => new Date(e.timestamp).toLocaleTimeString());
-          const values = entries.map(e => e.value);
-
-          const chart = charts.lines[zKey][metric];
-          chart.data.labels = times;
-          chart.data.datasets[0].data = values;
-          chart.update();
-        });
-      });
+  function makeChart(id, label, data) {
+    new Chart(document.getElementById(id), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: data,
+          borderWidth: 2
+        }]
+      }
     });
+  }
 
-    // Toggle history visibility
-    function toggleHistory(zKey) {
-      const section = document.getElementById(`${zKey}-history`);
-      section.style.display = section.style.display === 'none' ? 'block' : 'none';
-    }
-  </script>
+  makeChart("z1Power", "Power (W)", power);
+  makeChart("z1Current", "Current (A)", current);
+  makeChart("z1Ldr", "LDR Value", ldr);
+  makeChart("z1Brightness", "Brightness (%)", brightness);
+
+});
+</script>
+
 </body>
 </html>

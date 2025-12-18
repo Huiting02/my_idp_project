@@ -57,10 +57,10 @@ function loadZone(zone, idx) {
 
       for (const ts in history) {
         labels.push(new Date(parseInt(ts)).toLocaleTimeString());
-        power.push(history[ts].power);
-        current.push(history[ts].current);
-        ldr.push(history[ts].ldr);
-        brightness.push(history[ts].brightness);
+        power.push(history[ts].power ?? 0);
+        current.push(history[ts].current ?? 0);
+        ldr.push(history[ts].ldr ?? 0);
+        brightness.push(history[ts].brightness_level ?? 0);
       }
 
       function makeChart(id, label, data) {
@@ -92,3 +92,4 @@ loadZone("Z4", 4);
 
 </body>
 </html>
+

@@ -6,24 +6,44 @@
 </head>
 <body>
 
+<h2>Zone 1 Sensors</h2>
+
 <canvas id="powerChart"></canvas>
+<canvas id="currentChart"></canvas>
+<canvas id="ldrChart"></canvas>
+<canvas id="brightnessChart"></canvas>
 
 <script>
-fetch("https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1.json")
+const firebaseURL =
+"https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/streetlight/Z1.json";
+
+fetch(firebaseURL)
 .then(res => res.json())
 .then(data => {
-  const ctx = document.getElementById("powerChart");
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: ["Now"],
-      datasets: [{
-        label: "Power (W)",
-        data: [data.power],
-        borderWidth: 2
-      }]
-    }
-  });
+
+  function createChart(id, label, value) {
+    new Chart(document.getElementById(id), {
+      type: "line",
+      data: {
+        labels: ["Now"],
+        datasets: [{
+          label: label,
+          data: [value],
+          borderWidth: 2,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+  }
+
+  createChart("powerChart", "Power (W)", data.power);
+  createChart("currentChart", "Current (A)", data.current);
+  createChart("ldrChart", "LDR Value", data.ldr);
+  createChart("brightnessChart", "Brightness (%)", data.brightness_level);
+
 });
 </script>
 

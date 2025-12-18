@@ -13,59 +13,87 @@
 
 <h2>Zone 1 – Power</h2>
 <canvas id="z1Power"></canvas>
-
+<h2>Zone 2 – Power</h2>
+<canvas id="z2Power"></canvas>
+<h2>Zone 3 – Power</h2>
+<canvas id="z3Power"></canvas>
+<h2>Zone 4 – Power</h2>
+<canvas id="z4Power"></canvas>
+  
 <h2>Zone 1 – Current</h2>
+<canvas id="z1Current"></canvas>
+<h2>Zone 2 – Current</h2>
+<canvas id="z1Current"></canvas>
+<h2>Zone 3 – Current</h2>
+<canvas id="z1Current"></canvas>
+<h2>Zone 4 – Current</h2>
 <canvas id="z1Current"></canvas>
 
 <h2>Zone 1 – LDR</h2>
 <canvas id="z1Ldr"></canvas>
+<h2>Zone 2 – LDR</h2>
+<canvas id="z1Ldr"></canvas>
+<h2>Zone 3 – LDR</h2>
+<canvas id="z1Ldr"></canvas>
+<h2>Zone 4 – LDR</h2>
+<canvas id="z1Ldr"></canvas>
 
 <h2>Zone 1 – Brightness</h2>
 <canvas id="z1Brightness"></canvas>
+<h2>Zone 2 – Brightness</h2>
+<canvas id="z1Brightness"></canvas>
+<h2>Zone 3 – Brightness</h2>
+<canvas id="z1Brightness"></canvas>
+<h2>Zone 4 – Brightness</h2>
+<canvas id="z1Brightness"></canvas>
 
 <script>
-const BASE_URL =
-  "https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1/history.json";
+function loadZone(zone) {
+  fetch(`https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/${zone}/history.json`)
+    .then(res => res.json())
+    .then(history => {
 
-fetch(BASE_URL)
-.then(res => res.json())
-.then(history => {
+      const labels = [];
+      const power = [];
+      const current = [];
+      const ldr = [];
+      const brightness = [];
 
-  const labels = [];
-  const power = [];
-  const current = [];
-  const ldr = [];
-  const brightness = [];
-
-  for (const ts in history) {
-    labels.push(new Date(parseInt(ts)).toLocaleTimeString());
-    power.push(history[ts].power);
-    current.push(history[ts].current);
-    ldr.push(history[ts].ldr);
-    brightness.push(history[ts].brightness);
-  }
-
-  function makeChart(id, label, data) {
-    new Chart(document.getElementById(id), {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: label,
-          data: data,
-          borderWidth: 2
-        }]
+      for (const ts in history) {
+        labels.push(new Date(parseInt(ts)).toLocaleTimeString());
+        power.push(history[ts].power);
+        current.push(history[ts].current);
+        ldr.push(history[ts].ldr);
+        brightness.push(history[ts].brightness);
       }
+
+      function makeChart(id, label, data) {
+        new Chart(document.getElementById(id), {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: label,
+              data: data,
+              borderWidth: 2
+            }]
+          }
+        });
+      }
+
+      makeChart("z1Power", "Power (W)", power);
+      makeChart("z1Current", "Current (A)", current);
+      makeChart("z1Ldr", "LDR", ldr);
+      makeChart("z1Brightness", "Brightness (%)", brightness);
     });
-  }
+}
 
-  makeChart("z1Power", "Power (W)", power);
-  makeChart("z1Current", "Current (A)", current);
-  makeChart("z1Ldr", "LDR Value", ldr);
-  makeChart("z1Brightness", "Brightness (%)", brightness);
-
-});
+loadZone("Z1");
+loadZone("Z2");
+loadZone("Z3");
+loadZone("Z4");
 </script>
 
 </body>
 </html>
+

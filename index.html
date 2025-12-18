@@ -1,52 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Street Light Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .zone {
+      margin-bottom: 40px;
+    }
+    h2 {
+      text-align: center;
+      color: #444;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .chart-container {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      height: 300px;
+    }
+  </style>
 </head>
 <body>
+  <h1>Smart Street Light Dashboard</h1>
 
-<h2>Zone 1 Sensors</h2>
+  <!-- Zone 1 -->
+  <div class="zone">
+    <h2>Zone 1</h2>
+    <div class="charts-grid">
+      <div class="chart-container"><canvas id="z1-power"></canvas></div>
+      <div class="chart-container"><canvas id="z1-current"></canvas></div>
+      <div class="chart-container"><canvas id="z1-ldr"></canvas></div>
+      <div class="chart-container"><canvas id="z1-brightness"></canvas></div>
+    </div>
+  </div>
 
-<canvas id="powerChart"></canvas>
-<canvas id="currentChart"></canvas>
-<canvas id="ldrChart"></canvas>
-<canvas id="brightnessChart"></canvas>
+  <!-- Zone 2 -->
+  <div class="zone">
+    <h2>Zone 2</h2>
+    <div class="charts-grid">
+      <div class="chart-container"><canvas id="z2-power"></canvas></div>
+      <div class="chart-container"><canvas id="z2-current"></canvas></div>
+      <div class="chart-container"><canvas id="z2-ldr"></canvas></div>
+      <div class="chart-container"><canvas id="z2-brightness"></canvas></div>
+    </div>
+  </div>
 
-<script>
-const firebaseURL =
-"https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1.json";
+  <!-- Zone 3 -->
+  <div class="zone">
+    <h2>Zone 3</h2>
+    <div class="charts-grid">
+      <div class="chart-container"><canvas id="z3-power"></canvas></div>
+      <div class="chart-container"><canvas id="z3-current"></canvas></div>
+      <div class="chart-container"><canvas id="z3-ldr"></canvas></div>
+      <div class="chart-container"><canvas id="z3-brightness"></canvas></div>
+    </div>
+  </div>
 
-fetch(firebaseURL)
-.then(res => res.json())
-.then(data => {
+  <!-- Zone 4 -->
+  <div class="zone">
+    <h2>Zone 4</h2>
+    <div class="charts-grid">
+      <div class="chart-container"><canvas id="z4-power"></canvas></div>
+      <div class="chart-container"><canvas id="z4-current"></canvas></div>
+      <div class="chart-container"><canvas id="z4-ldr"></canvas></div>
+      <div class="chart-container"><canvas id="z4-brightness"></canvas></div>
+    </div>
+  </div>
 
-  function createChart(id, label, value) {
-    new Chart(document.getElementById(id), {
-      type: "line",
-      data: {
-        labels: ["Now"],
-        datasets: [{
-          label: label,
-          data: [value],
-          borderWidth: 2,
-          fill: false
-        }]
-      },
-      options: {
-        responsive: true
-      }
-    });
-  }
+  <script>
+    // Base URL for all zones
+    const baseURL = "https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight";
 
-  createChart("powerChart", "Power (W)", data.power);
-  createChart("currentChart", "Current (A)", data.current);
-  createChart("ldrChart", "LDR Value", data.ldr);
-  createChart("brightnessChart", "Brightness (%)", data.brightness_level);
+    // Function to create a gauge chart
+    function createGauge(canvasId, label, color, maxValue) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [0, maxValue],
+            backgroundColor: [color, '#e0e0e0'],
+            borderWidth: 0,
+            circumference: 180,
+            rotation: 270
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: label,
+              font: { size: 16 }
+            },
+            tooltip: { enabled: false },
+            legend: { display: false }
+          },
+          cutout: '75%'
+        }
+      });
+    }
 
-});
-</script>
+    // Store all charts
+    const charts = {
+      z1: {}, z2: {}, z3: {}, z4: {}
+    };
 
+    // Initialize all charts
+    function initCharts() {
+      const zones = ['z1', 'z2', 'z3', 'z4'];
+      zones.forEach(zone => {
+        charts[zone].power = createGauge(`${zone}-power`, 'Power (W)', '#f44336', 100);
+        charts[zone].current = createGauge(`${zone}-current`, 'Current (A)', '#ff9800', 10);
+        charts[zone].ldr = createGauge(`${zone}-ldr`, 'LDR Value', '#4caf50', 1023);
+        charts[zone].brightness = createGauge(`${zone}-brightness`, 'Brightness (%)', '#2196f3', 100);
+      });
+    }
+
+    // Update a single zone's charts
+    function updateZone(zone, data) {
+      const c = charts[zone];
+      if (!c || !data) return;
+
+      c.power.data.datasets[0].data = [data.power || 0, 100 - (data.power || 0)];
+      c.current.data.datasets[0].data = [data.current || 0, 10 - (data.current || 0)];
+      c.ldr.data.datasets[0].data = [data.ldr || 0, 1023 - (data.ldr || 0)];
+      c.brightness.data.datasets[0].data = [data.brightness_level || 0, 100 - (data.brightness_level || 0)];
+
+      Object.values(c).forEach(chart => chart.update());
+    }
+
+    // Fetch and update all zones
+    function updateAllZones() {
+      ['Z1', 'Z2', 'Z3', 'Z4'].forEach((zoneId, index) => {
+        const zoneKey = 'z' + (index + 1);
+        fetch(`${baseURL}/${zoneId}.json`)
+          .then(res => res.json())
+          .then(data => updateZone(zoneKey, data))
+          .catch(err => console.error(`Error fetching ${zoneId}:`, err));
+      });
+    }
+
+    // Start everything
+    initCharts();
+    updateAllZones();           // Initial load
+    setInterval(updateAllZones, 1000);  // Refresh every second
+  </script>
 </body>
 </html>
-

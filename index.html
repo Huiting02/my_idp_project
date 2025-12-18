@@ -1,66 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Street Light Dashboard - Zone 1</title>
+  <title>Smart Street Light Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
-    h1 { text-align: center; }
-    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-    canvas { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  </style>
 </head>
 <body>
-  <h1>Zone 1 Sensors</h1>
-  <div class="charts">
-    <canvas id="ldrChart"></canvas>
-    <canvas id="currentChart"></canvas>
-    <canvas id="powerChart"></canvas>
-    <canvas id="brightnessChart"></canvas>
-  </div>
 
-  <script>
-  const url = "https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1.json";
+<h2>Zone 1 Sensors</h2>
 
-  const createGauge = (id, label, color, max = 100) => {
-    return new Chart(document.getElementById(id), {
-      type: 'doughnut',
-      data: { datasets: [{ data: [0, max], backgroundColor: [color, '#eee'], borderWidth: 0, circumference: 180, rotation: 270 }] },
+<canvas id="powerChart"></canvas>
+<canvas id="currentChart"></canvas>
+<canvas id="ldrChart"></canvas>
+<canvas id="brightnessChart"></canvas>
+
+<script>
+const firebaseURL =
+"https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1.json";
+
+fetch(firebaseURL)
+.then(res => res.json())
+.then(data => {
+
+  function createChart(id, label, value) {
+    new Chart(document.getElementById(id), {
+      type: "line",
+      data: {
+        labels: ["Now"],
+        datasets: [{
+          label: label,
+          data: [value],
+          borderWidth: 2,
+          fill: false
+        }]
+      },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { title: { display: true, text: label }, tooltip: { enabled: false }, legend: { display: false } },
-        cutout: '80%'
+        responsive: true
       }
     });
-  };
-
-  const ldrChart = createGauge('ldrChart', 'LDR Value', '#4CAF50', 1023);
-  const currentChart = createGauge('currentChart', 'Current (A)', '#FF9800', 10);
-  const powerChart = createGauge('powerChart', 'Power (W)', '#F44336', 100);
-  const brightnessChart = createGauge('brightnessChart', 'Brightness (%)', '#2196F3', 100);
-
-  function updateCharts() {
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        if (!data) return;
-        ldrChart.data.datasets[0].data = [data.ldr || 0, 1023 - (data.ldr || 0)];
-        currentChart.data.datasets[0].data = [data.current || 0, 10 - (data.current || 0)];
-        powerChart.data.datasets[0].data = [data.power || 0, 100 - (data.power || 0)];
-        brightnessChart.data.datasets[0].data = [data.brightness_level || 0, 100 - (data.brightness_level || 0)];
-        [ldrChart, currentChart, powerChart, brightnessChart].forEach(c => c.update());
-      })
-      .catch(err => console.error("Fetch error:", err));
   }
 
-  updateCharts(); // initial
-  setInterval(updateCharts, 1000); // every second
+  createChart("powerChart", "Power (W)", data.power);
+  createChart("currentChart", "Current (A)", data.current);
+  createChart("ldrChart", "LDR Value", data.ldr);
+  createChart("brightnessChart", "Brightness (%)", data.brightness_level);
+
+});
 </script>
+
 </body>
 </html>
 

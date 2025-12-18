@@ -1,57 +1,122 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Smart Street Light – History Dashboard</title>
+  <title>Smart Street Light – Historical Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; margin: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+    h1 { text-align: center; color: #2c3e50; }
+    h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+    .zone { margin-bottom: 50px; }
     canvas {
       width: 100% !important;
-      height: 300px !important;
-      margin-bottom: 40px;
+      height: 280px !important;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .no-data {
+      text-align: center;
+      color: #7f8c8d;
+      font-style: italic;
+      padding: 40px;
+      background: #ecf0f1;
+      border-radius: 8px;
     }
   </style>
 </head>
-
 <body>
+  <h1>Smart Street Light – Historical Dashboard</h1>
 
-<h1>Smart Street Light – Historical Dashboard</h1>
+  <!-- Zone 1 -->
+  <div class="zone">
+    <h2>Zone 1</h2>
+    <canvas id="z1Power"></canvas>
+    <canvas id="z1Current"></canvas>
+    <canvas id="z1Ldr"></canvas>
+    <canvas id="z1Brightness"></canvas>
+  </div>
 
-<!-- ================= ZONE 1 ================= -->
-<h2>Zone 1</h2>
-<canvas id="z1Power"></canvas>
-<canvas id="z1Current"></canvas>
-<canvas id="z1Ldr"></canvas>
-<canvas id="z1Brightness"></canvas>
+  <!-- Zone 2 -->
+  <div class="zone">
+    <h2>Zone 2</h2>
+    <canvas id="z2Power"></canvas>
+    <canvas id="z2Current"></canvas>
+    <canvas id="z2Ldr"></canvas>
+    <canvas id="z2Brightness"></canvas>
+  </div>
 
-<!-- ================= ZONE 2 ================= -->
-<h2>Zone 2</h2>
-<canvas id="z2Power"></canvas>
-<canvas id="z2Current"></canvas>
-<canvas id="z2Ldr"></canvas>
-<canvas id="z2Brightness"></canvas>
+  <!-- Zone 3 -->
+  <div class="zone">
+    <h2>Zone 3</h2>
+    <canvas id="z3Power"></canvas>
+    <canvas id="z3Current"></canvas>
+    <canvas id="z3Ldr"></canvas>
+    <canvas id="z3Brightness"></canvas>
+  </div>
 
-<!-- ================= ZONE 3 ================= -->
-<h2>Zone 3</h2>
-<canvas id="z3Power"></canvas>
-<canvas id="z3Current"></canvas>
-<canvas id="z3Ldr"></canvas>
-<canvas id="z3Brightness"></canvas>
-
-<!-- ================= ZONE 4 ================= -->
-<h2>Zone 4</h2>
-<canvas id="z4Power"></canvas>
-<canvas id="z4Current"></canvas>
-<canvas id="z4Ldr"></canvas>
-<canvas id="z4Brightness"></canvas>
+  <!-- Zone 4 -->
+  <div class="zone">
+    <h2>Zone 4</h2>
+    <canvas id="z4Power"></canvas>
+    <canvas id="z4Current"></canvas>
+    <canvas id="z4Ldr"></canvas>
+    <canvas id="z4Brightness"></canvas>
+  </div>
 
 <script>
-function loadZone(zone, idx) {
-  fetch(`https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/${zone}/history.json`)
-    .then(res => res.json())
-    .then(history => {
+function createChart(canvasId, label, data, labels, color) {
+  new Chart(document.getElementById(canvasId), {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: label,
+        data: data,
+        borderColor: color,
+        backgroundColor: color + '33',
+        borderWidth: 3,
+        tension: 0.3,
+        fill: true,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      },
+      plugins: {
+        legend: { display: true },
+        title: { display: true, text: label }
+      }
+    }
+  });
+}
 
-      if (!history) return;
+function loadZone(zone, idx) {
+  const url = `https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/${zone}/history.json`;
+  
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then(history => {
+      if (!history || Object.keys(history).length === 0) {
+        // Show friendly "no data" message
+        ['Power', 'Current', 'Ldr', 'Brightness'].forEach(type => {
+          const canvas = document.getElementById(`z${idx}${type}`);
+          canvas.insertAdjacentHTML('afterend', '<div class="no-data">No historical data yet for this zone</div>');
+          canvas.style.display = 'none';
+        });
+        return;
+      }
+
+      // Sort by timestamp (oldest first)
+      const entries = Object.entries(history).sort((a, b) => a[0] - b[0]);
 
       const labels = [];
       const power = [];
@@ -59,46 +124,31 @@ function loadZone(zone, idx) {
       const ldr = [];
       const brightness = [];
 
-      for (const ts in history) {
-        labels.push(new Date(parseInt(ts)).toLocaleTimeString());
-        power.push(history[ts].power ?? 0);
-        current.push(history[ts].current ?? 0);
-        ldr.push(history[ts].ldr ?? 0);
-        brightness.push(history[ts].brightness_level ?? 0);
-      }
+      entries.forEach(([ts, values]) => {
+        const date = new Date(parseInt(ts));
+        labels.push(date.toLocaleString()); // Date + time for better readability
+        power.push(values.power ?? 0);
+        current.push(values.current ?? 0);
+        ldr.push(values.ldr ?? 0);
+        brightness.push(values.brightness_level ?? 0);
+      });
 
-      function makeChart(id, label, data) {
-        new Chart(document.getElementById(id), {
-          type: "line",
-          data: {
-            labels: labels,
-            datasets: [{
-              label: label,
-              data: data,
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        });
-      }
-
-      makeChart(`z${idx}Power`, "Power (W)", power);
-      makeChart(`z${idx}Current`, "Current (A)", current);
-      makeChart(`z${idx}Ldr`, "LDR", ldr);
-      makeChart(`z${idx}Brightness`, "Brightness (%)", brightness);
+      createChart(`z${idx}Power`, "Power (W)", power, labels, "#e74c3c");
+      createChart(`z${idx}Current`, "Current (A)", current, labels, "#3498db");
+      createChart(`z${idx}Ldr`, "LDR Value", ldr, labels, "#9b59b6");
+      createChart(`z${idx}Brightness`, "Brightness Level (%)", brightness, labels, "#2ecc71");
+    })
+    .catch(err => {
+      console.error(`Error loading ${zone}:`, err);
+      alert(`Failed to load data for ${zone}. Check console for details.`);
     });
 }
 
+// Load all zones
 loadZone("Z1", 1);
 loadZone("Z2", 2);
 loadZone("Z3", 3);
 loadZone("Z4", 4);
 </script>
-
 </body>
 </html>
-
-

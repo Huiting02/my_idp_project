@@ -1,51 +1,111 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Smart Street Light Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Street Light Dashboard - Zone 1</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
+    h1 { text-align: center; }
+    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    canvas { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  </style>
 </head>
 <body>
+  <h1>Zone 1 Sensors</h1>
+  <div class="charts">
+    <canvas id="ldrChart"></canvas>
+    <canvas id="currentChart"></canvas>
+    <canvas id="powerChart"></canvas>
+    <canvas id="brightnessChart"></canvas>
+  </div>
 
-<h2>Zone 1 Sensors</h2>
+  <script>
+    // Your Firebase config (replace with your project's config from Firebase console > Project settings)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTVVZwFig73ziu-NxVK0UV6EElYTjWHik",
+      authDomain: "idp-eg8.firebaseapp.com",
+      databaseURL: "https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "idp-eg8",
+      storageBucket: "idp-eg8.firebasestorage.app",
+      messagingSenderId: "945752838310",
+      appId: "1:945752838310:web:4f13c42db6713f653a6467"
+    };
 
-<canvas id="powerChart"></canvas>
-<canvas id="currentChart"></canvas>
-<canvas id="ldrChart"></canvas>
-<canvas id="brightnessChart"></canvas>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const zoneRef = db.ref('SmartStreetLight/Z1');
 
-<script>
-const firebaseURL =
-"https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/streetlight/Z1.json";
+    // Create gauge charts (0-100% scale for simplicity; adjust max as needed)
+    const createGauge = (id, label, color, max = 1023) => {
+      return new Chart(document.getElementById(id), {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [0, max],
+            backgroundColor: [color, '#eee'],
+            borderWidth: 0,
+            circumference: 180,
+            rotation: 270
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: label },
+            tooltip: { enabled: false },
+            legend: { display: false }
+          },
+          cutout: '80%'
+        }
+      });
+    };
 
-fetch(firebaseURL)
-.then(res => res.json())
-.then(data => {
+    const ldrChart = createGauge('ldrChart', 'LDR Value (0-1023)', '#4CAF50', 1023);
+    const currentChart = createGauge('currentChart', 'Current (A)', '#FF9800', 10); // assume max ~10A
+    const powerChart = createGauge('powerChart', 'Power (W)', '#F44336', 100); // assume max ~100W
+    const brightnessChart = createGauge('brightnessChart', 'Brightness Level (%)', '#2196F3', 100);
 
-  function createChart(id, label, value) {
-    new Chart(document.getElementById(id), {
-      type: "line",
-      data: {
-        labels: ["Now"],
-        datasets: [{
-          label: label,
-          data: [value],
-          borderWidth: 2,
-          fill: false
-        }]
-      },
-      options: {
-        responsive: true
-      }
+    // Realtime listener (best method - updates instantly)
+    zoneRef.on('value', (snapshot) => {
+      const data = snapshot.val() || {};
+      updateChart(ldrChart, data.ldr || 0, 1023);
+      updateChart(currentChart, data.current || 0, 10);
+      updateChart(powerChart, data.power || 0, 100);
+      updateChart(brightnessChart, data.brightness_level || 0, 100);
+    }, (error) => {
+      console.error("Firebase error:", error);
     });
-  }
 
-  createChart("powerChart", "Power (W)", data.power);
-  createChart("currentChart", "Current (A)", data.current);
-  createChart("ldrChart", "LDR Value", data.ldr);
-  createChart("brightnessChart", "Brightness (%)", data.brightness_level);
+    // Helper to update gauge
+    function updateChart(chart, value, max) {
+      chart.data.datasets[0].data = [value, max - value];
+      chart.options.plugins.title.text += ` : ${value}`;
+      chart.update('quiet');
+      // Reset title for next update
+      setTimeout(() => {
+        chart.options.plugins.title.text = chart.options.plugins.title.text.split(' : ')[0];
+      }, 100);
+    }
 
-});
-</script>
-
+    // Alternative: Polling every second with fetch (if you can't use SDK)
+    /*
+    function fetchData() {
+      fetch('https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/Z1.json')
+        .then(res => res.json())
+        .then(data => {
+          // Same updateChart calls as above
+        })
+        .catch(err => console.error(err));
+    }
+    setInterval(fetchData, 1000);
+    fetchData(); // initial load
+    */
+  </script>
 </body>
 </html>

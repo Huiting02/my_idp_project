@@ -5,53 +5,49 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
-    canvas { margin-bottom: 50px; }
+    canvas { margin-bottom: 40px; }
   </style>
 </head>
 
 <body>
 
-<h2>Zone 1 – Power</h2>
+<h1>Smart Street Light – Historical Dashboard</h1>
+
+<!-- ================= ZONE 1 ================= -->
+<h2>Zone 1</h2>
 <canvas id="z1Power"></canvas>
-<h2>Zone 2 – Power</h2>
+<canvas id="z1Current"></canvas>
+<canvas id="z1Ldr"></canvas>
+<canvas id="z1Brightness"></canvas>
+
+<!-- ================= ZONE 2 ================= -->
+<h2>Zone 2</h2>
 <canvas id="z2Power"></canvas>
-<h2>Zone 3 – Power</h2>
+<canvas id="z2Current"></canvas>
+<canvas id="z2Ldr"></canvas>
+<canvas id="z2Brightness"></canvas>
+
+<!-- ================= ZONE 3 ================= -->
+<h2>Zone 3</h2>
 <canvas id="z3Power"></canvas>
-<h2>Zone 4 – Power</h2>
+<canvas id="z3Current"></canvas>
+<canvas id="z3Ldr"></canvas>
+<canvas id="z3Brightness"></canvas>
+
+<!-- ================= ZONE 4 ================= -->
+<h2>Zone 4</h2>
 <canvas id="z4Power"></canvas>
-  
-<h2>Zone 1 – Current</h2>
-<canvas id="z1Current"></canvas>
-<h2>Zone 2 – Current</h2>
-<canvas id="z1Current"></canvas>
-<h2>Zone 3 – Current</h2>
-<canvas id="z1Current"></canvas>
-<h2>Zone 4 – Current</h2>
-<canvas id="z1Current"></canvas>
-
-<h2>Zone 1 – LDR</h2>
-<canvas id="z1Ldr"></canvas>
-<h2>Zone 2 – LDR</h2>
-<canvas id="z1Ldr"></canvas>
-<h2>Zone 3 – LDR</h2>
-<canvas id="z1Ldr"></canvas>
-<h2>Zone 4 – LDR</h2>
-<canvas id="z1Ldr"></canvas>
-
-<h2>Zone 1 – Brightness</h2>
-<canvas id="z1Brightness"></canvas>
-<h2>Zone 2 – Brightness</h2>
-<canvas id="z1Brightness"></canvas>
-<h2>Zone 3 – Brightness</h2>
-<canvas id="z1Brightness"></canvas>
-<h2>Zone 4 – Brightness</h2>
-<canvas id="z1Brightness"></canvas>
+<canvas id="z4Current"></canvas>
+<canvas id="z4Ldr"></canvas>
+<canvas id="z4Brightness"></canvas>
 
 <script>
-function loadZone(zone) {
+function loadZone(zone, idx) {
   fetch(`https://idp-eg8-default-rtdb.asia-southeast1.firebasedatabase.app/SmartStreetLight/${zone}/history.json`)
     .then(res => res.json())
     .then(history => {
+
+      if (!history) return;
 
       const labels = [];
       const power = [];
@@ -81,19 +77,18 @@ function loadZone(zone) {
         });
       }
 
-      makeChart("z1Power", "Power (W)", power);
-      makeChart("z1Current", "Current (A)", current);
-      makeChart("z1Ldr", "LDR", ldr);
-      makeChart("z1Brightness", "Brightness (%)", brightness);
+      makeChart(`z${idx}Power`, "Power (W)", power);
+      makeChart(`z${idx}Current`, "Current (A)", current);
+      makeChart(`z${idx}Ldr`, "LDR", ldr);
+      makeChart(`z${idx}Brightness`, "Brightness (%)", brightness);
     });
 }
 
-loadZone("Z1");
-loadZone("Z2");
-loadZone("Z3");
-loadZone("Z4");
+loadZone("Z1", 1);
+loadZone("Z2", 2);
+loadZone("Z3", 3);
+loadZone("Z4", 4);
 </script>
 
 </body>
 </html>
-

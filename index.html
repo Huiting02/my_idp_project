@@ -5,7 +5,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
-    canvas { margin-bottom: 40px; }
+    canvas {
+      width: 100% !important;
+      height: 300px !important;
+      margin-bottom: 40px;
+    }
   </style>
 </head>
 
@@ -73,6 +77,10 @@ function loadZone(zone, idx) {
               data: data,
               borderWidth: 2
             }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false
           }
         });
       }
@@ -92,4 +100,5 @@ loadZone("Z4", 4);
 
 </body>
 </html>
+
 
